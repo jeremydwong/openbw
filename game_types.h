@@ -11,20 +11,41 @@ struct sprite_t;
 struct flingy_t;
 struct unit_t;
 
+struct object_limits {
+#ifdef OPENBW_REMASTERED_LIMITS
+	// StarCraft: Remastered limits. Not compatible with 1.16 replays or BWAPI.
+	static constexpr size_t units = 3400;
+	static constexpr size_t bullets = 400;
+	static constexpr size_t sprites = 5000;
+	static constexpr size_t images = 10000;
+	static constexpr size_t orders = 4000;
+	static constexpr int unit_id_index_bits = 13;
+#else
+	static constexpr size_t units = 1700;
+	static constexpr size_t bullets = 100;
+	static constexpr size_t sprites = 2500;
+	static constexpr size_t images = 5000;
+	static constexpr size_t orders = 2000;
+	static constexpr int unit_id_index_bits = 11;
+#endif
+};
+static_assert(object_limits::units < (1u << object_limits::unit_id_index_bits), "unit id index bits too small for unit limit");
+
 template<typename T>
 struct unit_id_t {
+	static constexpr int index_bits = object_limits::unit_id_index_bits;
 	T raw_value = 0;
 	unit_id_t() = default;
 	explicit unit_id_t(T raw_value) : raw_value(raw_value) {}
-	explicit unit_id_t(size_t index, unsigned int generation) : raw_value((T)(index | generation << 11)) {}
+	explicit unit_id_t(size_t index, unsigned int generation) : raw_value((T)(index | generation << index_bits)) {}
 	bool operator==(const unit_id_t& n) const {
 		return raw_value == n.raw_value;
 	}
 	size_t index() const {
-		return raw_value & 0x7ff;
+		return raw_value & ((1u << index_bits) - 1);
 	}
 	unsigned int generation() const {
-		return raw_value >> 11;
+		return raw_value >> index_bits;
 	}
 };
 

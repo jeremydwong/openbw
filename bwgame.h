@@ -296,17 +296,17 @@ struct state_base_non_copyable {
 	intrusive_list<unit_t, void, &unit_t::cloaked_unit_link> cloaked_units;
 	intrusive_list<unit_t, psionic_matrix_link_f> psionic_matrix_units;
 
-	object_container<unit_t, 1700, 17> units_container;
+	object_container<unit_t, object_limits::units, 17> units_container;
 
 	intrusive_list<bullet_t, default_link_f> active_bullets;
-	object_container<bullet_t, 100, 10> bullets_container;
+	object_container<bullet_t, object_limits::bullets, 10> bullets_container;
 
 	a_vector<intrusive_list<sprite_t, default_link_f>> sprites_on_tile_line;
-	object_container<sprite_t, 2500, 25> sprites_container;
+	object_container<sprite_t, object_limits::sprites, 25> sprites_container;
 
-	object_container<image_t, 5000, 50> images_container;
+	object_container<image_t, object_limits::images, 50> images_container;
 
-	object_container<order_t, 2000, 20> orders_container;
+	object_container<order_t, object_limits::orders, 20> orders_container;
 
 	intrusive_list<path_t, default_link_f> free_paths;
 	a_list<path_t> paths;
@@ -636,18 +636,18 @@ struct state_functions {
 		if (!idx) return nullptr;
 		unit_t* u = get_unit(idx - 1);
 		if (!u) return nullptr;
-		if (u->unit_id_generation % (1u << (int_bits<T>::value - 11)) != id.generation()) return nullptr;
+		if (u->unit_id_generation % (1u << (int_bits<T>::value - unit_id_t<T>::index_bits)) != id.generation()) return nullptr;
 		return u;
 	}
 
 	unit_id get_unit_id(const unit_t* u) const {
 		if (!u) return unit_id{};
-		return unit_id(u->index + 1, u->unit_id_generation % (1u << 5));
+		return unit_id(u->index + 1, u->unit_id_generation % (1u << (16 - unit_id::index_bits)));
 	}
 
 	unit_id_32 get_unit_id_32(const unit_t* u) const {
 		if (!u) return unit_id_32{};
-		return unit_id_32(u->index + 1, u->unit_id_generation % (1u << 21));
+		return unit_id_32(u->index + 1, u->unit_id_generation % (1u << (32 - unit_id_32::index_bits)));
 	}
 
 	bool is_in_map_bounds(const unit_type_t* unit_type, xy pos) const {
